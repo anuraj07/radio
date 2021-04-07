@@ -1,10 +1,10 @@
 import 'package:audioplayers/audioplayers.dart';
+import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:radio/model/radio.dart';
 import 'package:radio/utils/ai_util.dart';
 import 'package:velocity_x/velocity_x.dart';
-import 'dart:developer';
 
 class HomePage extends StatefulWidget {
   @override
@@ -15,6 +15,7 @@ class _HomePageState extends State<HomePage> {
   List<MyRadio> radios;
   MyRadio _selectedRadio;
   Color _selectedColor;
+  bool _isPlaying = false;
 
   final AudioPlayer _audioPlayer = AudioPlayer();
 
@@ -22,6 +23,15 @@ class _HomePageState extends State<HomePage> {
   void initState() {
     super.initState();
     fetchRadios();
+
+    _audioPlayer.onPlayerStateChanged.listen((event) {
+      if (event == AudioPlayerState.PLAYING) {
+        _isPlaying = true;
+      } else {
+        _isPlaying = false;
+      }
+      setState(() {});
+    });
   }
 
   fetchRadios() async {
@@ -91,16 +101,6 @@ class _HomePageState extends State<HomePage> {
               elevation: 0.0,
               centerTitle: true,
             ).h(100.0).p16(),
-            //   "Start with - Hey Alan 👇".text.italic.semiBold.white.make(),
-            //   10.heightBox,
-            //   VxSwiper(
-            //     height: 50.0,
-            //     viewportFraction: 0.35,
-            //     autoPlay: true,
-            //     autoPlayAnimationDuration: 3.seconds,
-            //     autoPlayCurve: Curves.linear,
-            //     enableInfiniteScroll: true, items: ["1","2","3"],
-            //   )
           ].vStack(alignment: MainAxisAlignment.start),
           30.heightBox,
           radios != null
@@ -147,6 +147,17 @@ class _HomePageState extends State<HomePage> {
                           crossAlignment: CrossAxisAlignment.center,
                         ),
                       ),
+                      Align(
+                        alignment: Alignment.center,
+                        child: [
+                          Icon(
+                            CupertinoIcons.play_circle,
+                            color: Colors.white,
+                          ),
+                          10.heightBox,
+                          "Double tap to play".text.gray300.make(),
+                        ].vStack(),
+                      )
                     ]))
                         .clip(Clip.antiAlias)
                         .bgImage(
@@ -169,8 +180,33 @@ class _HomePageState extends State<HomePage> {
                   child: CircularProgressIndicator(
                     backgroundColor: Colors.white,
                   ),
-                )
+                ),
+          Align(
+            alignment: Alignment.bottomCenter,
+            child: [
+              if (_isPlaying)
+                "Playing Now - ${_selectedRadio.name} FM"
+                    .text
+                    .white
+                    .makeCentered(),
+              Icon(
+                _isPlaying
+                    ? CupertinoIcons.stop_circle
+                    : CupertinoIcons.play_circle,
+                color: Colors.white,
+                size: 50.0,
+              ).onInkTap(() {
+                if (_isPlaying) {
+                  _audioPlayer.stop();
+                } else {
+                  _playMusic(_selectedRadio.url);
+                }
+              })
+            ].vStack(),
+          ).pOnly(bottom: context.percentHeight * 12)
         ],
+        fit: StackFit.expand,
+        clipBehavior: Clip.antiAlias,
       ),
     );
   }
